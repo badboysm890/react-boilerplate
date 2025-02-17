@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { PersonalInfo } from '../../types/resume';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, Twitter, X, Loader2 } from 'lucide-react';
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Linkedin,
+  Github,
+  Twitter,
+  X,
+  Loader2
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface PersonalInfoFormProps {
@@ -15,7 +25,12 @@ interface ConfirmationModalProps {
   onCancel: () => void;
 }
 
-function ConfirmationModal({ existingData, newData, onConfirm, onCancel }: ConfirmationModalProps) {
+function ConfirmationModal({
+  existingData,
+  newData,
+  onConfirm,
+  onCancel
+}: ConfirmationModalProps) {
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>(
     Object.keys(newData).reduce((acc, field) => {
       acc[field] = true;
@@ -26,7 +41,7 @@ function ConfirmationModal({ existingData, newData, onConfirm, onCancel }: Confi
   const handleCheckboxChange = (field: string) => {
     setSelectedFields(prev => ({
       ...prev,
-      [field]: !prev[field],
+      [field]: !prev[field]
     }));
   };
 
@@ -102,15 +117,38 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
 
+  // Helper: Prepend a prefix if needed.
+  const addPrefix = (value: string, prefix: string) => {
+    if (value && !value.startsWith(prefix)) {
+      return prefix + value;
+    }
+    return value;
+  };
+
+  // Update top-level fields (phone, email, etc.)
   const handleChange = (field: keyof PersonalInfo, value: string) => {
+    // Automatically prepend prefixes if the field is touched and non-empty.
+    if (field === 'phone') {
+      value = addPrefix(value, 'Phone: ');
+    }
+    if (field === 'email') {
+      value = addPrefix(value, 'Email: ');
+    }
     const updatedData = { ...data, [field]: value };
     onChange(updatedData);
   };
 
+  // Update social links fields.
   const handleSocialLinkChange = (platform: keyof typeof data.socialLinks, value: string) => {
+    if (platform === 'linkedin') {
+      value = addPrefix(value, 'LinkedIn: ');
+    }
+    if (platform === 'github') {
+      value = addPrefix(value, 'Github: ');
+    }
     const updatedData = {
       ...data,
-      socialLinks: { ...data.socialLinks, [platform]: value },
+      socialLinks: { ...data.socialLinks, [platform]: value }
     };
     onChange(updatedData);
   };
@@ -120,7 +158,7 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
     try {
       if (skipExtraction) {
         const result = JSON.parse(text);
-        
+
         let updatedData = { ...data };
         const newFields = new Set<string>();
         const changes: Record<string, string> = {};
@@ -128,14 +166,14 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
         let hasConflicts = false;
 
         const fieldMappings: Record<string, string | [string, string]> = {
-          'full_name': 'fullName',
-          'professional_title': 'title',
-          'email': 'email',
-          'phone_number': 'phone',
-          'location': 'location',
-          'website_url': 'website',
-          'linkedin_url': ['socialLinks', 'linkedin'],
-          'professional_summary': 'summary'
+          full_name: 'fullName',
+          professional_title: 'title',
+          email: 'email',
+          phone_number: 'phone',
+          location: 'location',
+          website_url: 'website',
+          linkedin_url: ['socialLinks', 'linkedin'],
+          professional_summary: 'summary'
         };
 
         Object.entries(result).forEach(([apiField, apiValue]) => {
@@ -194,19 +232,27 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
             setAiFilledFields(new Set());
           }, 3000);
         } else {
-          toast.info('No new information found to load');
+          toast('No new information found to load', { icon: 'ℹ️' });
         }
-        
+
         return;
+      }
+
+      // Build the payload including the resume_text and,
+      // if available, the job_description from local storage.
+      const jobDescription = localStorage.getItem('Current_JobDescription');
+      const payload: { resume_text: string; job_description?: string } = { resume_text: text };
+      if (jobDescription) {
+        payload.job_description = jobDescription;
       }
 
       const response = await fetch('https://fastapi-drab-iota.vercel.app/extract_resume', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'accept': 'application/json'
+          accept: 'application/json'
         },
-        body: JSON.stringify({ resume_text: text }),
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -229,14 +275,14 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
       let hasConflicts = false;
 
       const fieldMappings: Record<string, string | [string, string]> = {
-        'full_name': 'fullName',
-        'professional_title': 'title',
-        'email': 'email',
-        'phone_number': 'phone',
-        'location': 'location',
-        'website_url': 'website',
-        'linkedin_url': ['socialLinks', 'linkedin'],
-        'professional_summary': 'summary'
+        full_name: 'fullName',
+        professional_title: 'title',
+        email: 'email',
+        phone_number: 'phone',
+        location: 'location',
+        website_url: 'website',
+        linkedin_url: ['socialLinks', 'linkedin'],
+        professional_summary: 'summary'
       };
 
       Object.entries(result).forEach(([apiField, apiValue]) => {
@@ -295,9 +341,8 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
           setAiFilledFields(new Set());
         }, 3000);
       } else {
-        toast.info('No new information found to extract');
+        toast('No new information found to extract', { icon: 'ℹ️' });
       }
-
     } catch (error) {
       console.error('Error extracting information:', error);
       toast.error('Failed to extract information. Please try again.');
@@ -346,6 +391,21 @@ export default function PersonalInfoForm({ data, onChange }: PersonalInfoFormPro
     setShowConfirmation(false);
   };
 
+  // Warn user before leaving the page if required fields are not filled.
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Check required fields – adjust these as needed.
+      if (!data.fullName || !data.email || !data.phone) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [data]);
+
+  // Listen for messages from the parent (or another window) to trigger the AI extraction.
   useEffect(() => {
     const handleSearchMessage = (event: MessageEvent) => {
       if (event.data?.type === 'SEARCH_QUERY' && event.data?.query) {

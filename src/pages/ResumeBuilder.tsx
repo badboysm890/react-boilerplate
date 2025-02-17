@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  FileText,
-  ArrowLeft,
-  LogOut,
   User,
   GraduationCap,
   Briefcase,
   Code2,
   ListPlus,
   FileDown,
-  Save,
-  Sparkles,
-  LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -421,7 +415,6 @@ export default function ResumeBuilder() {
                 {currentStep === 5 && (
                   <ResumePreview
                     data={resumeData}
-                    resumeId={searchParams.get('id') || ''}
                     onDownload={() => {
                       if (!user) {
                         setShowAuthModal(true);

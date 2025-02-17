@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Palette, 
@@ -51,13 +51,18 @@ function SidebarLink({ icon: Icon, tooltip, onClick, isActive, to }: SidebarLink
 }
 
 export default function ResumeBuilderSidebar({ 
+  onTemplateClick,
+  onPreviewClick,
   onSettingsClick,
   currentView 
 }: { 
+  onTemplateClick: () => void;
+  onPreviewClick: () => void;
   onSettingsClick: () => void;
   currentView: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   
   return (
     <>
@@ -94,12 +99,17 @@ export default function ResumeBuilderSidebar({
 
             {/* Bottom icon - Settings */}
             <div className="mb-2">
-              <SidebarLink
-                icon={Settings}
-                tooltip="Resume Settings"
-                onClick={onSettingsClick}
-                isActive={currentView === 'settings'}
-              />
+              <Link
+                to="/settings"
+                state={{ from: '/builder' }}
+                className={`p-3 flex items-center justify-center rounded-xl transition-all duration-200
+                  ${currentView === 'settings' 
+                    ? 'bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-blue-600' 
+                    : 'text-gray-500 hover:bg-gradient-to-r hover:from-blue-600/5 hover:to-purple-600/5 hover:text-blue-600'
+                  }`}
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
             </div>
           </div>
         </div>

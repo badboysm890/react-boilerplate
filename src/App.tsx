@@ -8,6 +8,11 @@ import ResetPassword from './pages/ResetPassword';
 import ResumeBuilder from './pages/ResumeBuilder';
 import PublicProfile from './pages/PublicProfile';
 import SharedResume from './pages/SharedResume';
+import AnalysisReport from './pages/AnalysisReport';
+import Settings from './pages/Settings';
+import Corporates from './pages/Corporates';
+import CorporatesLanding from './pages/CorporatesLanding';
+import CorporatesResumeResults from './pages/CorporatesResumeResults';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -23,6 +28,10 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/builder" element={<ResumeBuilder />} />
+          <Route path="/analysis-report" element={<AnalysisReport />} />
+          <Route path="/corporates" element={<Corporates />} />
+          <Route path="/corporates/landing" element={<CorporatesLanding />} />
+          <Route path="/corporates/results" element={<CorporatesResumeResults />} />
           
           {/* Shared resume route - make sure this comes before the profile route */}
           <Route path="/r/:token" element={<SharedResume />} />
@@ -36,6 +45,15 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                <Settings />
               </PrivateRoute>
             }
           />

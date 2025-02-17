@@ -118,3 +118,15 @@ export interface Resume {
   template: string;
   content: any;
 }
+
+export interface UploadedResume {
+  id: string;
+  name: string;
+  size: string;
+  uploadTime: string;
+  file: File;
+  previewUrl?: string;
+  conversionProgress: number;
+  status: 'pending' | 'converting' | 'completed' | 'error';
+  _forceUpdate?: number;
+}

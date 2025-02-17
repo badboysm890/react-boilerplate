@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Plus, Trash2, GripVertical, Pencil } from 'lucide-react';
 import { CustomSection, CustomSectionItem } from '../../types/resume';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -20,10 +20,7 @@ const DraggableItem = memo<DraggableItemProps>(({ item, onDelete, onEdit, provid
     className="bg-gray-50 p-4 rounded-md group hover:bg-white hover:border-blue-500 hover:border transition-all duration-200"
   >
     <div className="flex items-center justify-between">
-      <div
-        {...provided.dragHandleProps}
-        className="flex items-center flex-1"
-      >
+      <div {...provided.dragHandleProps} className="flex items-center flex-1">
         <GripVertical className="h-5 w-5 text-gray-400 mr-2" />
         <div>
           <h4 className="font-medium">{item.title}</h4>
@@ -55,6 +52,80 @@ const DraggableItem = memo<DraggableItemProps>(({ item, onDelete, onEdit, provid
 
 DraggableItem.displayName = 'DraggableItem';
 
+interface AutoFillCustomModalProps {
+  autoFilledSections: CustomSection[];
+  onApply: (selectedSections: CustomSection[]) => void;
+  onCancel: () => void;
+}
+
+function AutoFillCustomModal({
+  autoFilledSections,
+  onApply,
+  onCancel,
+}: AutoFillCustomModalProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Select all auto-filled sections by default.
+    setSelectedIds(autoFilledSections.map((section) => section.id));
+  }, [autoFilledSections]);
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+    );
+  };
+
+  const handleApply = () => {
+    const selectedSections = autoFilledSections.filter((section) =>
+      selectedIds.includes(section.id)
+    );
+    onApply(selectedSections);
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+        <h2 className="text-xl font-bold mb-2">Autofill Custom Sections</h2>
+        <p className="text-red-500 text-sm mb-4">
+          For best result choose just 2 Project, what works for the job or related ones.
+        </p>
+        <div className="max-h-60 overflow-y-auto mb-4 space-y-2">
+          {autoFilledSections.map((section) => (
+            <div key={section.id} className="flex items-center justify-between border-b pb-2">
+              <div>
+                <h4 className="font-medium">{section.title}</h4>
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(section.id)}
+                  onChange={() => toggleSelection(section.id)}
+                  className="h-4 w-4"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleApply}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface CustomSectionFormProps {
   sections: CustomSection[];
   onChange: (sections: CustomSection[]) => void;
@@ -80,11 +151,40 @@ export default function CustomSectionForm({ sections, onChange }: CustomSectionF
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
+  // States for handling the autofill modal for custom sections
+  const [showAutoFillModal, setShowAutoFillModal] = useState(false);
+  const [autoFilledSections, setAutoFilledSections] = useState<CustomSection[]>([]);
+
   const handleAutoFill = async () => {
     const data = await populateSection('custom');
-    if (data) {
-      onChange(data);
+    if (data && data.length > 0) {
+      // Instead of directly populating, open the modal to let user choose which sections to add.
+      setAutoFilledSections(data);
+      setShowAutoFillModal(true);
     }
+  };
+
+  const handleAutoFillApply = (selectedSections: CustomSection[]) => {
+    // Merge the selected auto-filled sections with current sections.
+    // If a section with the same title (case-insensitive) exists, update it; otherwise, add it.
+    const mergedSections = [...sections];
+    selectedSections.forEach((autoSection) => {
+      const existingIndex = mergedSections.findIndex(
+        (section) =>
+          section.title.trim().toLowerCase() === autoSection.title.trim().toLowerCase()
+      );
+      if (existingIndex !== -1) {
+        mergedSections[existingIndex] = autoSection;
+      } else {
+        mergedSections.push({ ...autoSection, id: crypto.randomUUID() });
+      }
+    });
+    onChange(mergedSections);
+    setShowAutoFillModal(false);
+  };
+
+  const handleAutoFillCancel = () => {
+    setShowAutoFillModal(false);
   };
 
   const handleAddSection = () => {
@@ -521,6 +621,14 @@ export default function CustomSectionForm({ sections, onChange }: CustomSectionF
             </button>
           </div>
         </div>
+      )}
+
+      {showAutoFillModal && (
+        <AutoFillCustomModal
+          autoFilledSections={autoFilledSections}
+          onApply={handleAutoFillApply}
+          onCancel={handleAutoFillCancel}
+        />
       )}
     </div>
   );

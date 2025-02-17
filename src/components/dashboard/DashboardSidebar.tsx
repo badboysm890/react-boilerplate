@@ -7,13 +7,15 @@ interface SidebarLinkProps {
   icon: React.ElementType;
   tooltip: string;
   isActive?: boolean;
+  state?: object;
 }
 
-function SidebarLink({ to, icon: Icon, tooltip, isActive }: SidebarLinkProps) {
+function SidebarLink({ to, icon: Icon, tooltip, isActive, state }: SidebarLinkProps) {
   return (
     <div className="relative group">
       <Link
         to={to}
+        state={state}
         className={`p-3 flex items-center justify-center rounded-xl transition-all duration-200
           ${isActive 
             ? 'bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-blue-600' 
@@ -93,6 +95,7 @@ export default function DashboardSidebar() {
               icon={Settings}
               tooltip="Settings"
               isActive={location.pathname === '/settings'}
+              state={{ from: '/dashboard' }}
             />
           </div>
         </div>
